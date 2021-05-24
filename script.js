@@ -36,8 +36,6 @@ function clickedCard() {
     });
 }
 
-//------- SMALL FUNCTION ------------------------------------------------------------------------------------------------
-
 //update card length.
 function updateCard() {
 	card = document.querySelectorAll(".card");
