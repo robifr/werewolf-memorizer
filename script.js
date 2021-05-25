@@ -43,7 +43,7 @@ function clickedCard() {
 	//add event-listener to the latest card only,
 	//to prevent multiple event-listener in single element.
 	latestCard.addEventListener("click", function() {
-   	 cardState(this);
+		cardState(this);
     });
 }
 
