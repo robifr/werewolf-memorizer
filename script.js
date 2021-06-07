@@ -1,11 +1,22 @@
 "use strict";
 
-const addCard = document.getElementById("card-add");
-const removeCard = document.getElementById("card-remove");
+const addBtn = document.getElementById("add-btn");
+const removeBtn = document.getElementById("remove-btn");
 const cardContainer = document.getElementById("card-container");
+const cardBtn = document.querySelectorAll("[data-btn]");
+
 let card = document.querySelectorAll(".card");
 
-addCard.addEventListener("click", () => {
+let pressTimer = null;
+
+//append a new card.
+addBtn.addEventListener("mousedown", pressEvent);
+addBtn.addEventListener("touchstart", pressEvent);
+addBtn.addEventListener("mouseup", cancelEvent);
+addBtn.addEventListener("touchend", cancelEvent);
+addBtn.addEventListener("click", clickAdd);
+
+function clickAdd() {
 	//change cardContainer state, from display flex to grid.
 	if (!cardContainer.classList.contains("card-container-grid")) {
 		gridContainer();
@@ -14,44 +25,120 @@ addCard.addEventListener("click", () => {
 	//set the max number of cards 16.
 	if (card.length <= 15) {
 		appendCard();
-	} else {
-		return;
 	}
 	updateCard();
 	clickedCard();
-});
-
-removeCard.addEventListener("click", () => {
-	//get the last index of card in node, and remove them.
-	let latestCard = [].slice.call(card).pop();
-	latestCard.remove();
-	
-	updateCard();
-	
-	//when there's no more card to be removed.
-	//change cardContainer state to initial, display flex.
-	if (card.length === 0) {
-		initialContainer();
-	}
-});
+}
 
 //looking for clicked card.
 function clickedCard() {
 	//get the last index of card in node.
-	let latestCard = [].slice.call(card).pop();
+	let lastCard = [].slice.call(card).pop();
 	
-	//add event-listener to the latest card only,
+	//add event-listener to the latest card only, 
 	//to prevent multiple event-listener in single element.
-	latestCard.addEventListener("click", function() {
-		cardState(this);
-    });
+	lastCard.addEventListener("mousedown", pressEvent);
+	lastCard.addEventListener("touchstart", pressEvent);
+	lastCard.addEventListener("mouseup", cancelEvent);
+	lastCard.addEventListener("touchend", cancelEvent);
+	lastCard.addEventListener("click", clickCard);
+	
+	function clickCard() {
+		//get current clicked card background color.
+		let currentBg = this.getAttribute("data-current-bg");
+		//get current clicked card description.
+		let cardDesc = this.querySelector(".card-desc");
+
+		//change background color and description when being clicked.
+		if (currentBg === "gray") {
+			this.setAttribute("data-current-bg", "green");
+			cardDesc.textContent = "good";	
+		} else if (currentBg === "green") {
+			this.setAttribute("data-current-bg", "yellow");
+			cardDesc.textContent = "suspect";
+		} else if (currentBg === "yellow") {
+			this.setAttribute("data-current-bg", "red");
+			cardDesc.textContent = "evil";
+		} else {
+			this.setAttribute("data-current-bg", "gray");
+			cardDesc.textContent = "unknown";
+		}
+	}
 }
 
-//------- DETAILED FUNCTION ------------------------------------------------------------------------------------------------
+//remove the latest card.
+removeBtn.addEventListener("mousedown", pressEvent);
+removeBtn.addEventListener("touchstart", pressEvent);
+removeBtn.addEventListener("mouseup", cancelEvent);
+removeBtn.addEventListener("touchend", cancelEvent);
+removeBtn.addEventListener("click", clickRemove);
+
+function clickRemove() {
+	//get the last index of card in node, and remove them.
+	let lastCard = [].slice.call(card).pop();
+	lastCard.remove();
+	
+	updateCard();
+	
+	//when there's no more card to be removed.
+	//change cardContainer state to display flex.
+	if (card.length === 0) {
+		initialContainer();
+	}
+}
+
+//called whenever user presses add, remove, 
+//or the card itself.
+function pressEvent() {
+	//get the clicked element type.
+	let isCard = this.getAttribute("class");
+	let btnType = this.getAttribute("id");
+
+	if (pressTimer === null) {
+		pressTimer = setTimeout(() => {
+			//check if the pressed element is a button.
+			if (isCard !== "card") {
+				pressTimer = setInterval(() => {
+					//add or remove card when being pressed.
+					if (btnType === "add-btn") {
+						clickAdd();
+					} else {
+						clickRemove();
+					}
+				}, 120);
+			//otherwise the pressed element is a card.
+			} else {
+				//get current pressed card description.
+				let cardDesc = this.querySelector(".card-desc");
+
+				//hide background color and description.
+				this.setAttribute("data-current-bg", "invis");
+				cardDesc.textContent = "";
+			}
+		}, 100);
+	}
+	return false;
+}
+
+//called whenever user cancels to press add, remove,
+//or the card itself.
+function cancelEvent() {
+	if (pressTimer !== null) {
+		clearTimeout(pressTimer);
+		clearInterval(pressTimer);
+		pressTimer = null;
+	}
+}
+
+//----- FUNCTION ORIGIN -----------------------------------------------------------------------------------------------
+
+function updateCard() {
+	card = document.querySelectorAll(".card");
+}
 
 //initial state of card container, display flex.
 function initialContainer() {
-	cardContainer.textContent = "Click + to add a new card, and - to remove them.";
+	cardContainer.textContent = "Press + to add a new card, and - to remove them.";
 	cardContainer.classList.remove("card-container-grid");
 	cardContainer.classList.add("card-container-initial");
 }
@@ -63,59 +150,34 @@ function gridContainer() {
 	cardContainer.classList.add("card-container-grid");
 }
 
-//to update card length.
-function updateCard() {
-	card = document.querySelectorAll(".card");
-}
+//---- "CLICK ADD" FUNCTION ---- START
 
 function appendCard() {
 	/** result:
 	 *
 	 * <label class="card" data-current-bg="gray">
-	 *	<p>1</p>
+	 *	<p class="card-num">1</p>
 	 *	<p class="card-desc">unknown</p>
 	 * </label>
 	 */
 	
 	let createLabel = document.createElement("label");
-	let label = cardContainer.appendChild(createLabel);
-	label.setAttribute("class", "card");
-	label.setAttribute("data-current-bg", "gray");
+	let cardLabel = cardContainer.appendChild(createLabel);
+	cardLabel.setAttribute("class", "card");
+	cardLabel.setAttribute("data-current-bg", "gray");
 	
 	let createNum = document.createElement("p");
-	let cardNum = label.appendChild(createNum);
+	let cardNum = cardLabel.appendChild(createNum);
+	cardNum.setAttribute("class", "card-num");
 	//give the card number based on the order of index.
 	for (let i = 1; i < card.length +2; i++) {
 		cardNum.textContent = i.toString();
 	}
 	
 	let createDesc = document.createElement("p");
-	let cardDesc = label.appendChild(createDesc);
+	let cardDesc = cardLabel.appendChild(createDesc);
 	cardDesc.setAttribute("class", "card-desc");
 	cardDesc.textContent = "unknown";
 }
 
-function cardState(e) {
-	//get current clicked card background color.
-	const currentBg = e.getAttribute("data-current-bg");		
-	//get current clicked card description.
-	const cardDesc = e.querySelector(".card-desc");
-		
-	//change background color and description when being clicked.
-	if (currentBg === "gray") {
-		e.setAttribute("data-current-bg", "green");
-		cardDesc.textContent = "good";    	
-	} else if (currentBg === "green") {
-		e.setAttribute("data-current-bg", "yellow");
-		cardDesc.textContent = "suspect";
-	} else if (currentBg === "yellow") {
-		e.setAttribute("data-current-bg", "red");
-		cardDesc.textContent = "evil";
-	} else if (currentBg === "red") {
-		e.setAttribute("data-current-bg", "none");
-		cardDesc.textContent = "";
-	} else {
-		e.setAttribute("data-current-bg", "gray");
-		cardDesc.textContent = "unknown";
-	}
-}
+//--- "CLICK ADD" FUNCTION ---- END
