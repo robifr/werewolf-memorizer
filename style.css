@@ -81,6 +81,10 @@
 		width:2.5em;
 		font-size:1.6em;
     }
+
+    .card-brn span {
+        align-self:flex-end
+    }
 	
     .card-btn span:active {
         background-color:#0c0c0c;
